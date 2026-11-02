@@ -6,7 +6,9 @@ import type { Job } from "./contracts";
 const globalDb = globalThis as typeof globalThis & { studioDb?: DatabaseSync };
 function database() {
   if (!globalDb.studioDb) {
-    const dir = path.resolve(/* turbopackIgnore: true */ process.env.STUDIO_DATA_DIR || ".data");
+    const isVercel = !!process.env.VERCEL;
+    const dataDir = isVercel ? "/tmp" : (process.env.STUDIO_DATA_DIR || ".data");
+    const dir = path.resolve(dataDir);
     mkdirSync(dir, { recursive: true });
     const db = new DatabaseSync(path.join(dir, "studio.sqlite"));
     db.exec("PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; CREATE TABLE IF NOT EXISTS jobs (id TEXT PRIMARY KEY, created_at TEXT NOT NULL, data TEXT NOT NULL)");
