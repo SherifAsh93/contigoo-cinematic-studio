@@ -82,20 +82,24 @@ export async function replicateGenerate(input: GenerationInput): Promise<{ predi
     };
   }
 
-  const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-      "Prefer": "respond-async",
-    },
-    body: JSON.stringify({
+  const body: Record<string, unknown> = {
       version: modelInfo.version,
       input: replicateInput,
-      webhook: process.env.REPLICATE_WEBHOOK_URL,
-      webhook_events_filter: ["completed", "failed"],
-    }),
-  });
+    };
+    if (process.env.REPLICATE_WEBHOOK_URL) {
+      body.webhook = process.env.REPLICATE_WEBHOOK_URL;
+      body.webhook_events_filter = ["start", "output", "logs", "completed"];
+    }
+
+    const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "respond-async",
+      },
+      body: JSON.stringify(body),
+    });
 
   if (!response.ok) {
     const error = await response.json();
