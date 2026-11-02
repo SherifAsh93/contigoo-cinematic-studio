@@ -18,19 +18,49 @@ interface ReplicatePrediction {
 interface ReplicateModel {
   owner: string;
   name: string;
-  version: string;
-  inputSchema: Record<string, unknown>;
+  latest_version: {
+    id: string;
+    created_at: string;
+  };
 }
 
-const MODEL_MAP: Record<string, { owner: string; name: string; version: string }> = {
-  "flux-schnell": { owner: "black-forest-labs", name: "flux-schnell", version: "latest" },
-  "flux-klein": { owner: "black-forest-labs", name: "flux-klein", version: "latest" },
-  "qwen-image": { owner: "qwen", name: "qwen-image", version: "latest" },
-  "wan-5b": { owner: "wan-video", name: "wan-2.2-5b", version: "latest" },
-  "wan-14b": { owner: "wan-video", name: "wan-2.2-14b", version: "latest" },
-  "flux-inpaint": { owner: "black-forest-labs", name: "flux-inpaint", version: "latest" },
-  "flux-upscale": { owner: "nightmareai", name: "real-esrgan", version: "latest" },
+const MODEL_MAP: Record<string, { owner: string; name: string }> = {
+  "flux-schnell": { owner: "black-forest-labs", name: "flux-schnell" },
+  "flux-klein": { owner: "black-forest-labs", name: "flux-klein" },
+  "qwen-image": { owner: "qwen", name: "qwen-image" },
+  "wan-5b": { owner: "wan-video", name: "wan-2.2-5b" },
+  "wan-14b": { owner: "wan-video", name: "wan-2.2-14b" },
+  "flux-inpaint": { owner: "black-forest-labs", name: "flux-inpaint" },
+  "flux-upscale": { owner: "nightmareai", name: "real-esrgan" },
 };
+
+const versionCache = new Map<string, string>();
+
+async function getModelVersion(owner: string, name: string): Promise<string> {
+  const cacheKey = `${owner}/${name}`;
+  if (versionCache.has(cacheKey)) {
+    return versionCache.get(cacheKey)!;
+  }
+
+  const apiKey = process.env.REPLICATE_API_TOKEN;
+  if (!apiKey) throw new Error("REPLICATE_API_TOKEN not set");
+
+  const response = await fetch(`${REPLICATE_API_URL}/models/${owner}/${name}`, {
+    headers: { "Authorization": `Bearer ${apiKey}` },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(`Failed to fetch model ${owner}/${name}: ${error.detail || response.statusText}`);
+  }
+
+  const model = await response.json() as ReplicateModel;
+  const version = model.latest_version?.id;
+  if (!version) throw new Error(`No latest version found for ${owner}/${name}`);
+
+  versionCache.set(cacheKey, version);
+  return version;
+}
 
 function getReplicateModel(modelId: string) {
   return MODEL_MAP[modelId];
@@ -42,6 +72,8 @@ export async function replicateGenerate(input: GenerationInput): Promise<{ predi
 
   const modelInfo = getReplicateModel(input.modelId);
   if (!modelInfo) throw new Error(`No Replicate model mapping for ${input.modelId}`);
+
+  const version = await getModelVersion(modelInfo.owner, modelInfo.name);
 
   const model = getModel(input.modelId);
   const isVideo = model?.kind === "video";
@@ -83,23 +115,23 @@ export async function replicateGenerate(input: GenerationInput): Promise<{ predi
   }
 
   const body: Record<string, unknown> = {
-      version: modelInfo.version,
-      input: replicateInput,
-    };
-    if (process.env.REPLICATE_WEBHOOK_URL) {
-      body.webhook = process.env.REPLICATE_WEBHOOK_URL;
-      body.webhook_events_filter = ["start", "output", "logs", "completed"];
-    }
+    version,
+    input: replicateInput,
+  };
+  if (process.env.REPLICATE_WEBHOOK_URL) {
+    body.webhook = process.env.REPLICATE_WEBHOOK_URL;
+    body.webhook_events_filter = ["start", "output", "logs", "completed"];
+  }
 
-    const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-        "Prefer": "respond-async",
-      },
-      body: JSON.stringify(body),
-    });
+  const response = await fetch(`${REPLICATE_API_URL}/predictions`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "Prefer": "respond-async",
+    },
+    body: JSON.stringify(body),
+  });
 
   if (!response.ok) {
     const error = await response.json();
