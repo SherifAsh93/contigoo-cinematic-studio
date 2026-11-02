@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { generationSchema, compilePrompt, type Job } from "@/lib/contracts";
 import { listJobs, saveJob } from "@/lib/store";
-import { submitGeneration, ProviderError } from "@/lib/comfy";
+import { submitGeneration } from "@/lib/provider";
 import { checkOrigin, apiError } from "@/lib/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,9 +14,9 @@ export async function POST(request: Request) {
   try {
     checkOrigin(request);
     const text = await request.text();
-    if (text.length > 20000) throw new ProviderError("Request is too large.", 413);
+    if (text.length > 20000) return Response.json({ error: "Request is too large." }, { status: 413 });
     let body: unknown;
-    try { body = JSON.parse(text); } catch { throw new ProviderError("Invalid JSON request.", 400); }
+    try { body = JSON.parse(text); } catch { return Response.json({ error: "Invalid JSON request." }, { status: 400 }); }
     const result = generationSchema.safeParse(body);
     if (!result.success) return Response.json({ error: result.error.issues[0].message }, { status: 400 });
     const input = result.data;
@@ -24,13 +24,15 @@ export async function POST(request: Request) {
     saveJob(job);
     if (input.action === "generate") {
       try {
-        job.promptId = await submitGeneration(input);
+        const { promptId, provider } = await submitGeneration(input);
+        job.promptId = promptId;
+        job.provider = provider;
         job.status = "queued";
       } catch (error) {
         job.status = "failed";
         job.error = error instanceof Error ? error.message : "Submission failed.";
         saveJob(job);
-        throw error;
+        return Response.json({ error: job.error }, { status: 500 });
       }
       saveJob(job);
     }

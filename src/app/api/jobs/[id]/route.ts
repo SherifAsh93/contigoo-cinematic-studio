@@ -1,5 +1,5 @@
 import { deleteJob, findJob, saveJob } from "@/lib/store";
-import { refreshJob } from "@/lib/comfy";
+import { refreshJob } from "@/lib/provider";
 import { apiError, checkOrigin } from "@/lib/http";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export async function DELETE(request: Request, context: Context) {
     const id = (await context.params).id;
     const job = findJob(id);
     if (!job) return Response.json({ error: "Shot not found." }, { status: 404 });
-    if (["queued", "submitting"].includes(job.status)) return Response.json({ error: "An active shot cannot be removed. Manage the queue in ComfyUI." }, { status: 409 });
+    if (["queued", "submitting"].includes(job.status)) return Response.json({ error: "An active shot cannot be removed." }, { status: 409 });
     deleteJob(id);
     return Response.json({ deleted: true });
   } catch (error) { return apiError(error); }

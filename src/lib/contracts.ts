@@ -7,6 +7,7 @@ const baseSchema = z.object({
   modelId: z.string().refine(id => !!getModel(id), "Unknown model."),
   seed: z.number().int().min(0).max(2147483647).default(42),
   action: z.enum(["draft", "generate"]).default("generate"),
+  provider: z.enum(["comfyui", "replicate"]).optional(),
 });
 
 export const generationSchema = baseSchema.extend({
@@ -40,6 +41,7 @@ export type Job = {
   promptId?: string;
   assets: Asset[];
   error?: string;
+  provider?: "comfyui" | "replicate";
 };
 export type Connection = {
   connected: boolean;
