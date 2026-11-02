@@ -1,0 +1,73 @@
+{
+  "flux-schnell": {
+    "workflow": "flux-schnell.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "width": { "node": "5", "input": "width" },
+      "height": { "node": "5", "input": "height" }
+    },
+    "outputNodes": ["9"]
+  },
+  "flux-klein": {
+    "workflow": "flux-klein.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "width": { "node": "5", "input": "width" },
+      "height": { "node": "5", "input": "height" }
+    },
+    "outputNodes": ["9"]
+  },
+  "qwen-image": {
+    "workflow": "qwen-image.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "width": { "node": "5", "input": "width" },
+      "height": { "node": "5", "input": "height" }
+    },
+    "outputNodes": ["9"]
+  },
+  "wan-5b": {
+    "workflow": "wan-5b.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "width": { "node": "5", "input": "width" },
+      "height": { "node": "5", "input": "height" },
+      "frames": { "node": "3", "input": "frames" },
+      "fps": { "node": "3", "input": "fps" }
+    },
+    "outputNodes": ["9"]
+  },
+  "wan-14b": {
+    "workflow": "wan-14b.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "width": { "node": "5", "input": "width" },
+      "height": { "node": "5", "input": "height" },
+      "frames": { "node": "3", "input": "frames" },
+      "fps": { "node": "3", "input": "fps" }
+    },
+    "outputNodes": ["9"]
+  },
+  "flux-inpaint": {
+    "workflow": "flux-inpaint.json",
+    "bindings": {
+      "prompt": { "node": "6", "input": "text" },
+      "seed": { "node": "3", "input": "seed" },
+      "init_image": { "node": "5", "input": "image" },
+      "mask": { "node": "9", "input": "image" }
+    },
+    "outputNodes": ["11"]
+  },
+  "flux-upscale": {
+    "workflow": "flux-upscale.json",
+    "bindings": {
+      "init_image": { "node": "1", "input": "image" }
+    },
+    "outputNodes": ["4"]
+  }
+}

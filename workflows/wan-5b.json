@@ -1,0 +1,11 @@
+{
+  "1": { "class_type": "WanModelLoader", "inputs": { "model_name": "wan2.2_ti2v_5b.safetensors", "weight_dtype": "default" } },
+  "2": { "class_type": "WanCLIPLoader", "inputs": { "clip_name1": "umt5_xxl_fp16.safetensors", "clip_name2": "clip_l.safetensors" } },
+  "3": { "class_type": "WanSampler", "inputs": { "seed": 42, "steps": 30, "cfg": 5, "sampler_name": "euler", "scheduler": "simple", "denoise": 1, "model": ["1", 0], "positive": ["6", 0], "negative": ["7", 0], "latent_image": ["5", 0], "frames": 73, "fps": 24 } },
+  "4": { "class_type": "WanVAELoader", "inputs": { "vae_name": "wan_vae.safetensors" } },
+  "5": { "class_type": "EmptyWanLatentImage", "inputs": { "width": 1280, "height": 704, "batch_size": 1, "frames": 73 } },
+  "6": { "class_type": "WanTextEncode", "inputs": { "text": "A cinematic video scene", "clip": ["2", 0] } },
+  "7": { "class_type": "WanTextEncode", "inputs": { "text": "", "clip": ["2", 0] } },
+  "8": { "class_type": "WanVAEDecode", "inputs": { "samples": ["3", 0], "vae": ["4", 0] } },
+  "9": { "class_type": "VideoCombine", "inputs": { "filename_prefix": "Contigoo", "frame_rate": 24, "images": ["8", 0] } }
+}
